@@ -213,6 +213,11 @@ func TolerateGpuForPod(pod *apiv1.Pod) {
 
 // BuildTestNode creates a node with specified capacity.
 func BuildTestNode(name string, millicpu int64, mem int64) *apiv1.Node {
+	return BuildTestNodeWithAllocatable(name, millicpu, mem, millicpu, mem)
+}
+
+// BuildTestNodeWithAllocatable creates a node with specified capacity and allocatable.
+func BuildTestNodeWithAllocatable(name string, millicpuCapacity, memCapacity, millicpuAllocatable, memAllocatable int64) *apiv1.Node {
 	node := &apiv1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:     name,
@@ -226,19 +231,23 @@ func BuildTestNode(name string, millicpu int64, mem int64) *apiv1.Node {
 			Capacity: apiv1.ResourceList{
 				apiv1.ResourcePods: *resource.NewQuantity(100, resource.DecimalSI),
 			},
+			Allocatable: apiv1.ResourceList{
+				apiv1.ResourcePods: *resource.NewQuantity(100, resource.DecimalSI),
+			},
 		},
 	}
 
-	if millicpu >= 0 {
-		node.Status.Capacity[apiv1.ResourceCPU] = *resource.NewMilliQuantity(millicpu, resource.DecimalSI)
+	if millicpuCapacity >= 0 {
+		node.Status.Capacity[apiv1.ResourceCPU] = *resource.NewMilliQuantity(millicpuCapacity, resource.DecimalSI)
 	}
-	if mem >= 0 {
-		node.Status.Capacity[apiv1.ResourceMemory] = *resource.NewQuantity(mem, resource.DecimalSI)
+	if memCapacity >= 0 {
+		node.Status.Capacity[apiv1.ResourceMemory] = *resource.NewQuantity(memCapacity, resource.DecimalSI)
 	}
-
-	node.Status.Allocatable = apiv1.ResourceList{}
-	for k, v := range node.Status.Capacity {
-		node.Status.Allocatable[k] = v
+	if millicpuAllocatable >= 0 {
+		node.Status.Allocatable[apiv1.ResourceCPU] = *resource.NewMilliQuantity(millicpuAllocatable, resource.DecimalSI)
+	}
+	if memAllocatable >= 0 {
+		node.Status.Allocatable[apiv1.ResourceMemory] = *resource.NewQuantity(memAllocatable, resource.DecimalSI)
 	}
 
 	return node
